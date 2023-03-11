@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ethers } from 'ethers';
 import * as tokenJson from './assets/MyToken.json'
+import { PaymentOrder } from './models/paymentOrder.model'; 
 //import * as dotenv from 'dotenv';
 //dotenv.config();
 
@@ -15,6 +16,8 @@ export class AppService {
   provider: ethers.providers.Provider;
   contract: ethers.Contract;
 
+  paymentOrders: PaymentOrder[];
+
   constructor(){
     this.provider = new ethers.providers.InfuraProvider(
       NETWORK,
@@ -25,6 +28,7 @@ export class AppService {
       tokenJson.abi,
       this.provider
     )
+    this.paymentOrders = [];
   }
 
   getContractAddress(): string {
@@ -52,10 +56,32 @@ export class AppService {
     return allowanceNumber;
   }
 
-  async getTransactionStatus(hash: string): Promise<string>{
+  async getTransactionStatus(hash: string): Promise<string> {
     const tx = await this.provider.getTransaction(hash);
     const txRecipt = await tx.wait();
     return txRecipt.status == 1 ? "Completed" : "Reverted";
   }
+
+  getPaymentOrders(){
+    return this.paymentOrders;
+  }
+
+  createPaymentOrder(value: number, secret : string) {
+    const newPaymentOrder = new PaymentOrder();
+    newPaymentOrder.value = value;
+    newPaymentOrder.secret = secret;
+    newPaymentOrder.id = this.paymentOrders.length;
+    this.paymentOrders.push(newPaymentOrder);
+    return newPaymentOrder.id;
+  }
+
+  //ToDo
+  //fulfillPaymentOrder(id: number, secret: string, address: string){
+  //  //Check if the secret is correct
+  //  //pick the pkey from env
+  //  //bvuild a signer
+  //  //connect signer to the contract
+  //  //call the mint function passing value to mint to address
+  //}
 
 }
